@@ -14,8 +14,10 @@ class UserSteam(models.Model):
 
 @receiver(post_save, sender=UserOpenID, dispatch_uid="save_steam_player")
 def save_steam_player(sender, instance, **kwargs):
-    steam_id = re.findall(r'/(\w+)', instance.claimed_id)[-1]
-    if Player.objects.filter(id=steam_id).count() >= 0:
-        return
-    player = Player.objects.steam_create(steam_id=steam_id)
-    UserSteam.objects.create(user=instance.user, player=player)
+    regex = r'http://steamcommunity.com/openid/id/(\w+)'
+    match = re.findall(regex, instance.claimed_id)
+    if len(match) > 0:
+        steam_id = match[0]
+        if Player.objects.filter(id=steam_id).count() == 0:
+            player = Player.objects.steam_create(steam_id=steam_id)
+            UserSteam.objects.create(user=instance.user, player=player)
